@@ -83,6 +83,27 @@
     60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
   }
   .controls { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  #serif[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* SERIF: plain black-on-white look */
+  body.serif { background: #fff; color: #000; font-family: Georgia, "Times New Roman", serif; }
+  body.serif h1, body.serif .score { font-weight: 400; }
+  body.serif .score .of, body.serif #message, body.serif .cheat { color: #555; }
+  body.serif .cheat input:checked ~ .label { color: #000; }
+  body.serif .tile {
+    background: #fff; color: #000; border-color: transparent; border-radius: 0;
+    font-family: inherit; font-weight: 400;
+  }
+  body.serif .tile.selected { background: rgba(90, 150, 240, 0.16); border-color: transparent; }
+  body.serif .tile.good { background: rgba(80, 190, 120, 0.22); border-color: transparent; }
+  body.serif .tile.bad { background: rgba(230, 95, 85, 0.18); border-color: transparent; }
+  body.serif button { background: #fff; color: #000; border-color: #bbb; font-family: inherit; }
+  body.serif #serif[aria-pressed="true"] { background: #000; color: #fff; border-color: #000; }
+  body.serif .slider { background: #ccc; }
+  body.serif .dialog { background: #fff; color: #000; border: 1px solid #ccc; }
+  body.serif button.primary { background: #000; color: #fff; border-color: #000; }
+
   .cheat { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 1rem; cursor: pointer; }
   .cheat input { display: none; }
   .slider {
@@ -127,7 +148,11 @@
   </div>
   <div class="controls">
     <label class="cheat"><input type="checkbox" id="cheat"><span class="slider"></span><span class="label">Cheat mode</span></label>
-    <button id="newGrid">New grid</button>
+    <div class="buttons">
+      <button id="shuffle">Shuffle</button>
+      <button id="serif" aria-pressed="false">SERIF</button>
+      <button id="newGrid">New grid</button>
+    </div>
   </div>
 
   <div id="confirm">

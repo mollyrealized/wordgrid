@@ -349,6 +349,46 @@ window.addEventListener("resize", drawString);
 
 // ---------- start ----------
 
+// ---------- shuffle ----------
+// Reorder the tiles within each column. Same letters, same found/gone state;
+// a picked tile stays picked in its new spot.
+
+function shuffleGrid() {
+  if (busy || !state) return;
+  const before = JSON.stringify(state.columns);
+  for (let tries = 0; tries < 20 && JSON.stringify(state.columns) === before; tries++) {
+    for (let c = 0; c < COLS; c++) {
+      const picked = selection[c] === null ? null : letterAt(c, selection[c]);
+      state.columns[c] = shuffle(state.columns[c].slice());
+      if (picked !== null) selection[c] = state.columns[c].indexOf(picked);
+    }
+  }
+  save();
+  buildBoard();
+  render();
+}
+document.getElementById("shuffle").addEventListener("click", shuffleGrid);
+
+// ---------- SERIF look ----------
+
+const SERIF_KEY = "wordgrid-serif";
+const serifBtn = document.getElementById("serif");
+function applySerif(on) {
+  document.body.classList.toggle("serif", on);
+  serifBtn.setAttribute("aria-pressed", on ? "true" : "false");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", on ? "#ffffff" : "#1f2430");
+  if (state && tiles.length) drawString();
+}
+let serifOn = false;
+try { serifOn = localStorage.getItem(SERIF_KEY) === "on"; } catch (e) { /* ignore */ }
+applySerif(serifOn);
+serifBtn.addEventListener("click", () => {
+  serifOn = !serifOn;
+  try { localStorage.setItem(SERIF_KEY, serifOn ? "on" : "off"); } catch (e) { /* ignore */ }
+  applySerif(serifOn);
+});
+
 // ---------- cheat mode switch ----------
 
 const CHEAT_KEY = "wordgrid-cheat";
