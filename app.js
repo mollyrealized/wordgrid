@@ -135,12 +135,45 @@ function buildBoard() {
   }
 }
 
+// The word spelled if tile (c, r) filled the one open column, else null.
+function wordWith(c, r) {
+  const open = selection.filter(x => x === null).length;
+  if (open !== 1 || selection[c] !== null) return null;
+  return selection.map((sr, i) => (i === c ? letterAt(c, r) : letterAt(i, sr))).join("");
+}
+
+// Hide a tile that would finish a word already found (target or bonus).
+function tileUsed(c, r) {
+  const w = wordWith(c, r);
+  return w !== null && (state.found.includes(w) || state.bonusFound.includes(w));
+}
+
+// Cheat mode: in the leftmost open column, mark tiles that continue
+// the current selection toward a remaining (unfound) target word.
+let cheatOn = false;
+function hintColumn() {
+  return selection.indexOf(null);
+}
+function tileHinted(c, r) {
+  if (!cheatOn || c !== hintColumn()) return false;
+  const L = letterAt(c, r);
+  return state.targets.some(w =>
+    !state.found.includes(w) &&
+    w[c] === L &&
+    selection.every((sr, i) => sr === null || w[i] === letterAt(i, sr))
+  );
+}
+
 function render() {
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r < ROWS; r++) {
       const t = tiles[c][r];
-      t.classList.toggle("gone", !tileAlive(c, r));
+      const alive = tileAlive(c, r);
+      t.classList.toggle("gone", !alive);
       t.classList.toggle("selected", selection[c] === r);
+      t.classList.toggle("covered", selection[c] !== null && selection[c] !== r);
+      t.classList.toggle("used", alive && tileUsed(c, r));
+      t.classList.toggle("hint", alive && !busy && tileHinted(c, r));
     }
   }
   foundEl.textContent = state.found.length;
@@ -183,7 +216,7 @@ function setTile(c, r) {
 }
 
 function onTap(c, r) {
-  if (busy || !tileAlive(c, r)) return;
+  if (busy || !tileAlive(c, r) || tileUsed(c, r)) return;
   setTile(c, selection[c] === r ? null : r);
 }
 
@@ -193,7 +226,10 @@ function onTypeLetter(L) {
   for (let c = 0; c < COLS; c++) {
     if (selection[c] !== null) continue;
     const r = state.columns[c].indexOf(L);
-    if (r !== -1 && tileAlive(c, r)) { setTile(c, r); return; }
+    if (r !== -1 && tileAlive(c, r)) {
+      if (!tileUsed(c, r)) setTile(c, r);   // a hidden used tile ignores the keystroke
+      return;
+    }
   }
   for (let i = selectOrder.length - 1; i >= 0; i--) {
     const c = selectOrder[i];
@@ -235,8 +271,8 @@ function finishAttempt(cls, after) {
     boardEl.classList.remove("shake");
     clearSelection();
     if (after) after();
-    render();
     busy = false;
+    render();
   }, cls === "bad" ? 420 : 520);
 }
 
@@ -312,6 +348,18 @@ document.getElementById("okNew").addEventListener("click", () => {
 window.addEventListener("resize", drawString);
 
 // ---------- start ----------
+
+// ---------- cheat mode switch ----------
+
+const CHEAT_KEY = "wordgrid-cheat";
+const cheatEl = document.getElementById("cheat");
+try { cheatOn = localStorage.getItem(CHEAT_KEY) === "on"; } catch (e) { /* ignore */ }
+cheatEl.checked = cheatOn;
+cheatEl.addEventListener("change", () => {
+  cheatOn = cheatEl.checked;
+  try { localStorage.setItem(CHEAT_KEY, cheatOn ? "on" : "off"); } catch (e) { /* ignore */ }
+  if (state && tiles.length) render();
+});
 
 (function start() {
   const saved = load();

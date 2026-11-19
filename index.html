@@ -19,6 +19,7 @@
     --tint: rgba(90, 150, 240, 0.32);
     --tint-solid: rgb(90, 150, 240);
     --good: rgb(80, 190, 120);
+    --hint: rgb(196, 120, 255);
     --bad: rgb(230, 95, 85);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -69,9 +70,10 @@
   .tile.selected { background: color-mix(in srgb, var(--tile) 70%, var(--tint-solid)); border-color: var(--tint-solid); }
   .tile.good { background: color-mix(in srgb, var(--tile) 55%, var(--good)); border-color: var(--good); }
   .tile.bad { background: color-mix(in srgb, var(--tile) 60%, var(--bad)); border-color: var(--bad); }
-  .tile.gone { opacity: 0; pointer-events: none; }
+  .tile.gone, .tile.covered, .tile.used { opacity: 0; pointer-events: none; }
+  .tile.hint { box-shadow: 0 0 0 4px var(--hint), 0 0 14px 2px var(--hint); }
   #string { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-  #string polyline { fill: none; stroke: var(--tint-solid); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: 0.75; }
+  #string polyline { fill: none; stroke: var(--tint-solid); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0.35; }
   #string.good polyline { stroke: var(--good); }
   #string.bad polyline { stroke: var(--bad); }
   .shake { animation: shake 0.38s ease; }
@@ -80,7 +82,20 @@
     20% { transform: translateX(-10px); } 40% { transform: translateX(9px); }
     60% { transform: translateX(-6px); } 80% { transform: translateX(4px); }
   }
-  .controls { margin-top: 22px; }
+  .controls { margin-top: 22px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .cheat { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 1rem; cursor: pointer; }
+  .cheat input { display: none; }
+  .slider {
+    position: relative; width: 46px; height: 26px; border-radius: 999px;
+    background: #4a5268; transition: background 0.2s;
+  }
+  .slider::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+    border-radius: 50%; background: #fff; transition: transform 0.2s;
+  }
+  .cheat input:checked + .slider { background: var(--hint); }
+  .cheat input:checked + .slider::after { transform: translateX(20px); }
+  .cheat input:checked ~ .label { color: var(--text); }
   button {
     font: inherit; font-size: 1rem; padding: 10px 22px; border-radius: 999px;
     border: 1px solid #4a5268; background: var(--panel); color: var(--text); cursor: pointer;
@@ -110,7 +125,10 @@
     <svg id="string"><polyline points=""></polyline></svg>
     <div id="loading">Building a grid...</div>
   </div>
-  <div class="controls"><button id="newGrid">New grid</button></div>
+  <div class="controls">
+    <label class="cheat"><input type="checkbox" id="cheat"><span class="slider"></span><span class="label">Cheat mode</span></label>
+    <button id="newGrid">New grid</button>
+  </div>
 
   <div id="confirm">
     <div class="dialog">

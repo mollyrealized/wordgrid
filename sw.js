@@ -1,4 +1,4 @@
-const CACHE = "wordgrid-v2";
+const CACHE = "wordgrid-v5";
 const FILES = ["./", "index.html", "app.js", "words.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
