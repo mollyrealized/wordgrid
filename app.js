@@ -77,7 +77,13 @@ function generateGrid() {
 
 let state = null;      // { columns, targets, found, bonusFound }
 let selection = new Array(COLS).fill(null);   // row index per column, or null
+let selectOrder = [];   // columns in the order their tiles were picked
 let busy = false;
+
+function clearSelection() {
+  selection.fill(null);
+  selectOrder = [];
+}
 
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
@@ -164,12 +170,54 @@ function showMessage(text, ms = 1600) {
 
 // ---------- play ----------
 
-function onTap(c, r) {
-  if (busy || !tileAlive(c, r)) return;
-  selection[c] = (selection[c] === r) ? null : r;
+function setTile(c, r) {
+  selectOrder = selectOrder.filter(x => x !== c);
+  if (r === null) {
+    selection[c] = null;
+  } else {
+    selection[c] = r;
+    selectOrder.push(c);
+  }
   render();
   if (selection.every(x => x !== null)) checkWord();
 }
+
+function onTap(c, r) {
+  if (busy || !tileAlive(c, r)) return;
+  setTile(c, selection[c] === r ? null : r);
+}
+
+// Typed letter: fill the leftmost open column that has it.
+// If no open column has it, unselect the most recent picked tile with that letter.
+function onTypeLetter(L) {
+  for (let c = 0; c < COLS; c++) {
+    if (selection[c] !== null) continue;
+    const r = state.columns[c].indexOf(L);
+    if (r !== -1 && tileAlive(c, r)) { setTile(c, r); return; }
+  }
+  for (let i = selectOrder.length - 1; i >= 0; i--) {
+    const c = selectOrder[i];
+    if (letterAt(c, selection[c]) === L) { setTile(c, null); return; }
+  }
+}
+
+// Backspace or Delete: remove the most recently picked letter.
+function onBackspace() {
+  if (selectOrder.length === 0) return;
+  setTile(selectOrder[selectOrder.length - 1], null);
+}
+
+document.addEventListener("keydown", e => {
+  if (busy || !state || confirmEl.classList.contains("open")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "Backspace" || e.key === "Delete") {
+    e.preventDefault();
+    onBackspace();
+  } else if (/^[a-zA-Z]$/.test(e.key)) {
+    e.preventDefault();
+    onTypeLetter(e.key.toUpperCase());
+  }
+});
 
 function selectedTiles() {
   return selection.map((r, c) => tiles[c][r]);
@@ -185,7 +233,7 @@ function finishAttempt(cls, after) {
     sel.forEach(t => t.classList.remove(cls));
     stringEl.classList.remove(cls);
     boardEl.classList.remove("shake");
-    selection.fill(null);
+    clearSelection();
     if (after) after();
     render();
     busy = false;
@@ -238,7 +286,7 @@ async function newGrid() {
   boardEl.style.visibility = "hidden";
   const g = await generateGrid();
   state = { columns: g.columns, targets: g.targets, found: [], bonusFound: [] };
-  selection.fill(null);
+  clearSelection();
   save();
   buildBoard();
   boardEl.style.visibility = "visible";

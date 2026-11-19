@@ -1,6 +1,6 @@
 {
-  "name": "Word Grid",
-  "short_name": "Word Grid",
+  "name": "WordGrid",
+  "short_name": "WordGrid",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
