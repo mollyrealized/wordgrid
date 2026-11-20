@@ -220,20 +220,21 @@ function onTap(c, r) {
   setTile(c, selection[c] === r ? null : r);
 }
 
-// Typed letter: fill the leftmost open column that has it.
-// If no open column has it, unselect the most recent picked tile with that letter.
+// Typed letter: typing only touches two places and never jumps.
+// If the leftmost open column has the letter, pick it. Otherwise, if the most
+// recently picked tile is that letter, unselect it. If neither, nothing happens.
 function onTypeLetter(L) {
-  for (let c = 0; c < COLS; c++) {
-    if (selection[c] !== null) continue;
+  const c = selection.indexOf(null);
+  if (c !== -1) {
     const r = state.columns[c].indexOf(L);
     if (r !== -1 && tileAlive(c, r)) {
       if (!tileUsed(c, r)) setTile(c, r);   // a hidden used tile ignores the keystroke
       return;
     }
   }
-  for (let i = selectOrder.length - 1; i >= 0; i--) {
-    const c = selectOrder[i];
-    if (letterAt(c, selection[c]) === L) { setTile(c, null); return; }
+  if (selectOrder.length > 0) {
+    const last = selectOrder[selectOrder.length - 1];
+    if (letterAt(last, selection[last]) === L) setTile(last, null);
   }
 }
 
